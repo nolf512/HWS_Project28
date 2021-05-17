@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import LocalAuthentication
 
 class ViewController: UIViewController {
 
@@ -22,7 +23,34 @@ class ViewController: UIViewController {
 }
 
     @IBAction func authenticationTapped(_ sender: Any) {
-        unlockSecretMessage()
+//        unlockSecretMessage()
+        let context = LAContext()
+        var error: NSError?
+        
+        if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
+            let reason = "Identify yourself!"
+            
+            context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) {
+                [weak self] success, authenticationError in
+                
+                DispatchQueue.main.sync {
+                    if success  {
+                        self?.unlockSecretMessage()
+                    } else {
+                        //error
+                        let ac = UIAlertController(title: "Authentication failed", message: "error: please try again", preferredStyle: .alert)
+                        ac.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+                        self?.present(ac, animated: true, completion: nil)
+                    }
+                }
+            }
+            
+        } else {
+            //no touchID
+            let ac = UIAlertController(title: "Biometry unavailable", message: "no biometric authentication", preferredStyle: .alert)
+            ac.addAction(UIAlertAction(title: "OK", style: .default, handler: nil))
+            self.present(ac, animated: true, completion: nil)
+        }
     }
     
     @objc func adjustForKeyboard(notification: Notification){
